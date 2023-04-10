@@ -1,6 +1,6 @@
 namespace AutoAlignHexes.Utils
 {
-    public enum HexRadius
+    internal enum HexRadius
     {
         Outer,
         Inner

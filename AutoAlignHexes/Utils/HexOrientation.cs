@@ -1,6 +1,6 @@
 namespace AutoAlignHexes.Utils
 {
-    public enum HexOrientation
+    internal enum HexOrientation
     {
         FlatTop,
         PointyTop
