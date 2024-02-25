@@ -21,7 +21,7 @@ namespace AutoAlignHexes
         private static void Init()
         {
             var window = (AutoAlignHexes)GetWindow(typeof(AutoAlignHexes));
-            window.titleContent.text = "Hex Creator";
+            window.titleContent.text = "Align Hexes";
             window.maxSize = new Vector2(300, 165);
             window.minSize = window.maxSize;
             window.Show();
@@ -72,10 +72,6 @@ namespace AutoAlignHexes
             GUILayout.Label("Expand By", GUILayout.Width(100));
             EditorGUI.BeginChangeCheck();
             _expandBy = EditorGUILayout.FloatField(_expandBy);
-            if (EditorGUI.EndChangeCheck())
-            {
-                GUI.FocusControl(null);
-            }
             GUILayout.EndHorizontal();
             
             if(GUILayout.Button("Expand"))
@@ -91,10 +87,6 @@ namespace AutoAlignHexes
             GUILayout.Label("Contract By", GUILayout.Width(100));
             EditorGUI.BeginChangeCheck();
             _contractBy = EditorGUILayout.FloatField(_contractBy);
-            if (EditorGUI.EndChangeCheck())
-            {
-                GUI.FocusControl(null);
-            }
             GUILayout.EndHorizontal();
             
             if(GUILayout.Button("Contract"))
