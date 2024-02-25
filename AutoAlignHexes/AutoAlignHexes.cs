@@ -1,3 +1,4 @@
+using System;
 using AutoAlignHexes.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -11,8 +12,9 @@ namespace AutoAlignHexes
         private readonly string[] _radiusTypes = { "Outer", "Inner" };
         private int _selectedOrientation = 0;
         private readonly string[] _orientations = { "Flat-Top", "Pointy-Top" };
-        private float _expandBy = 0.0f;
-        private float _contractBy = 0.0f;
+        private float _moveBy = 0.0f;
+        private int _selectedMoveDirections = 0;
+        private readonly string[] _moveDirections = { "Both", "Horizontally", "Vertically" };
 
         private HexRadius _radiusType;
         private HexOrientation _orientation;
@@ -22,7 +24,7 @@ namespace AutoAlignHexes
         {
             var window = (AutoAlignHexes)GetWindow(typeof(AutoAlignHexes));
             window.titleContent.text = "Align Hexes";
-            window.maxSize = new Vector2(300, 165);
+            window.maxSize = new Vector2(300, 135);
             window.minSize = window.maxSize;
             window.Show();
         }
@@ -35,11 +37,7 @@ namespace AutoAlignHexes
             
             GUILayout.Space(10);
 
-            DrawExpandBlock();
-            
-            GUILayout.Space(10);
-
-            DrawContractBlock();
+            DrawMoveBlock();
             
             GUILayout.EndVertical();
         }
@@ -62,41 +60,38 @@ namespace AutoAlignHexes
 
             if(GUILayout.Button("Align Hexes"))
             {
-                MoveHexes(0.0f);
+                MoveHexes(0.0f, MoveDirection.Both);
             }
         }
 
-        private void DrawExpandBlock()
+        private void DrawMoveBlock()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Expand By", GUILayout.Width(100));
+            GUILayout.Label("Move By", GUILayout.Width(100));
             EditorGUI.BeginChangeCheck();
-            _expandBy = EditorGUILayout.FloatField(_expandBy);
+            _moveBy = EditorGUILayout.FloatField(_moveBy);
+            GUILayout.EndHorizontal();
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Move Direction", GUILayout.Width(100));
+            _selectedMoveDirections = EditorGUILayout.Popup(_selectedMoveDirections, _moveDirections); 
             GUILayout.EndHorizontal();
             
             if(GUILayout.Button("Expand"))
             {
-                MoveHexes(_expandBy);
-                _expandBy = 0;
+                var moveDirection = _selectedMoveDirections switch
+                {
+                    0 => MoveDirection.Both,
+                    1 => MoveDirection.Horizontally,
+                    2 => MoveDirection.Vertically,
+                    _ => throw new ArgumentException("Stranger Things")
+                };
+                MoveHexes(_moveBy, moveDirection);
+                _moveBy = 0;
             }
         }
-
-        private void DrawContractBlock()
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Contract By", GUILayout.Width(100));
-            EditorGUI.BeginChangeCheck();
-            _contractBy = EditorGUILayout.FloatField(_contractBy);
-            GUILayout.EndHorizontal();
-            
-            if(GUILayout.Button("Contract"))
-            {
-                MoveHexes(-_contractBy);
-                _contractBy = 0;
-            }
-        }
-
-        private void MoveHexes(float additionalMove)
+        
+        private void MoveHexes(float additionalMove, MoveDirection direction)
         {
             var selectedGameObject = Selection.activeGameObject;
             if (selectedGameObject == null) return;
@@ -113,12 +108,12 @@ namespace AutoAlignHexes
                     HexOrientation.PointyTop => GetAlignedPositionPointyTop(childPosition, radius, radius + additionalMove),
                     _ => GetAlignedPositionFlatTop(childPosition, radius, radius + additionalMove)
                 };
-                childTransform.localPosition = new Vector3(alignedPosition.x, 0.0f, alignedPosition.y);
+                childTransform.localPosition = GetNewHexPositionByDirection(childPosition, alignedPosition, direction);
             }
             
             _radius = ConvertOuterRadiusToInnerByType(_radiusType, radius) + additionalMove;
         }
-
+        
         private static float GetOuterRadiusByInner(float radius)
         {
             return radius * 2 / Mathf.Sqrt(3);
@@ -205,6 +200,17 @@ namespace AutoAlignHexes
             var y = expectedRadius * (3.0f / 2 * roundedY);
 
             return new Vector2(x, y);
+        }
+
+        private Vector3 GetNewHexPositionByDirection(Vector3 oldPosition, Vector2 newPosition, MoveDirection direction)
+        {
+            return direction switch
+            {
+                MoveDirection.Both => new Vector3(newPosition.x, 0.0f, newPosition.y),
+                MoveDirection.Horizontally => new Vector3(newPosition.x, 0.0f, oldPosition.z),
+                MoveDirection.Vertically => new Vector3(oldPosition.x, 0.0f, newPosition.y),
+                _ => throw new ArgumentException("Stranger Things")
+            };
         }
     }
 }
